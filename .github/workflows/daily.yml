@@ -1,0 +1,48 @@
+name: Read-only portfolio briefing
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run, test-sender, or send-once'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - test-sender
+          - send-once
+permissions:
+  contents: read
+concurrency:
+  group: portfolio-daily-notifier
+  cancel-in-progress: false
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout ONLY separate automation repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python version
+        run: python --version
+      - name: Run reviewer or test sender
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_READ_TOKEN: ${{ secrets.GITHUB_READ_TOKEN }}
+          MODE: ${{ inputs.mode }}
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          set -eu
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            python notifier.py --send
+          elif [ "$MODE" = "test-sender" ]; then
+            python notifier.py --test-sender
+          elif [ "$MODE" = "send-once" ]; then
+            python notifier.py --send
+          else
+            python notifier.py
+          fi
