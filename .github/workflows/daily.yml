@@ -1,8 +1,10 @@
 name: Read-only portfolio briefing
+
 on:
   schedule:
-    - cron: '0 9 * * *'
-      timezone: 'Europe/London'
+    - cron: "0 9 * * *"
+      timezone: "Europe/London"
+
   workflow_dispatch:
     inputs:
       mode:
